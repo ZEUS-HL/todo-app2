@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getInitials } from '../App';
 
 function fmt(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -7,10 +8,12 @@ function fmt(iso) {
   });
 }
 
-function TaskItem({ task, onToggle, onUpdate, onDelete }) {
-  const [editing, setEditing] = useState(false);
+function TaskItem({ task, users, onToggle, onUpdate, onDelete }) {
+  const [editing, setEditing]       = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
-  const [draftDesc, setDraftDesc] = useState(task.description || '');
+  const [draftDesc, setDraftDesc]   = useState(task.description || '');
+
+  const creator = users?.find(u => u.id === task.userId);
 
   function handleSave() {
     const trimmed = draftTitle.trim();
@@ -25,9 +28,7 @@ function TaskItem({ task, onToggle, onUpdate, onDelete }) {
     setEditing(false);
   }
 
-  function handleKeyDown(e) {
-    if (e.key === 'Escape') handleCancel();
-  }
+  function handleKeyDown(e) { if (e.key === 'Escape') handleCancel(); }
 
   return (
     <div className={`task-item${task.completed ? ' completed' : ''}`}>
@@ -67,9 +68,19 @@ function TaskItem({ task, onToggle, onUpdate, onDelete }) {
           </>
         )}
 
-        <div className="task-dates">
-          <span>Created: {fmt(task.createdAt)}</span>
-          {task.updatedAt && <span>Edited: {fmt(task.updatedAt)}</span>}
+        <div className="task-meta-row">
+          {creator && (
+            <span className="task-creator">
+              <span className="task-creator-dot" style={{ background: creator.color }}>
+                {getInitials(creator.name)}
+              </span>
+              {creator.name}
+            </span>
+          )}
+          <div className="task-dates">
+            <span>Created: {fmt(task.createdAt)}</span>
+            {task.updatedAt && <span>Edited: {fmt(task.updatedAt)}</span>}
+          </div>
         </div>
       </div>
 
@@ -85,9 +96,7 @@ function TaskItem({ task, onToggle, onUpdate, onDelete }) {
             <button
               className="btn-delete"
               title="Delete"
-              onClick={() => {
-                if (window.confirm(`Delete "${task.title}"?`)) onDelete(task.id);
-              }}
+              onClick={() => { if (window.confirm(`Delete "${task.title}"?`)) onDelete(task.id); }}
             >✕</button>
           </>
         )}
