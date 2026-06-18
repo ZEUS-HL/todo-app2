@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 
 function TaskForm({ onAdd, disabled }) {
-  const [title, setTitle]           = useState('');
-  const [description, setDescription] = useState('');
-  const [expanded, setExpanded]     = useState(false);
+  const [title, setTitle]               = useState('');
+  const [description, setDescription]   = useState('');
+  const [expanded, setExpanded]         = useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (disabled) return;
+    // Always call onAdd — let App.jsx decide what feedback to show
     onAdd(title, description);
-    setTitle('');
-    setDescription('');
-    setExpanded(false);
+    if (title.trim()) {
+      setTitle('');
+      setDescription('');
+      setExpanded(false);
+    }
   }
 
   return (
-    <div className={`input-card${disabled ? ' input-card-disabled' : ''}`}>
+    <div className="input-card">
       <form onSubmit={handleSubmit}>
         <div className="input-row">
           <input
@@ -23,12 +25,11 @@ function TaskForm({ onAdd, disabled }) {
             placeholder={disabled ? 'Select a user first...' : 'Add a new task...'}
             value={title}
             onChange={e => setTitle(e.target.value)}
-            onFocus={() => !disabled && setExpanded(true)}
-            disabled={disabled}
+            onFocus={() => setExpanded(true)}
           />
-          <button type="submit" className="btn-add" disabled={disabled}>Add</button>
+          <button type="submit" className="btn-add">Add</button>
         </div>
-        {expanded && !disabled && (
+        {expanded && (
           <textarea
             className="input-description"
             placeholder="Add a description (optional)..."

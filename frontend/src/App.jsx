@@ -6,9 +6,9 @@ import AccountModal from './components/AccountModal';
 import { taskApi } from './services/api';
 import './App.css';
 
-const USERS_KEY   = 'mytasks-v2-users';
-const CURRENT_KEY = 'mytasks-v2-current';
-const TASKS_KEY   = 'mytasks-v2-tasks';
+const USERS_KEY   = 'mytasks-users';
+const CURRENT_KEY = 'mytasks-current';
+const TASKS_KEY   = 'mytasks-tasks';
 
 export const AVATAR_COLORS = ['#e53e3e','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899'];
 
@@ -20,6 +20,24 @@ function load(key, fallback) {
 function saveTasks(tasks) {
   localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
 }
+
+// Migrate tasks stored under any old key into the current key
+function migrateTasks() {
+  const OLD_KEYS = ['mytasks-v1', 'mytasks-v2-tasks'];
+  if (localStorage.getItem(TASKS_KEY)) return; // already migrated
+  for (const k of OLD_KEYS) {
+    try {
+      const data = JSON.parse(localStorage.getItem(k));
+      if (Array.isArray(data) && data.length > 0) {
+        localStorage.setItem(TASKS_KEY, JSON.stringify(data));
+        return;
+      }
+    } catch { /* ignore */ }
+  }
+}
+
+// Run migration once at module load time
+migrateTasks();
 
 export function getInitials(name) {
   if (!name?.trim()) return '?';
@@ -40,8 +58,8 @@ function App() {
   useEffect(() => localStorage.setItem(CURRENT_KEY, JSON.stringify(currentUserId)), [currentUserId]);
   useEffect(() => saveTasks(tasks), [tasks]);
 
-  // Auto-open modal on first visit
-  useEffect(() => { if (users.length === 0) setShowAccount(true); }, []);
+  // Open account modal when there is no active user
+  useEffect(() => { if (!currentUser) setShowAccount(true); }, [currentUser]);
 
   const currentUser = users.find(u => u.id === currentUserId) || null;
 
