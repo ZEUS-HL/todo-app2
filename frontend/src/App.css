@@ -161,7 +161,7 @@ body {
   box-shadow: 0 2px 12px rgba(229,62,62,0.08);
   padding: 14px 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   transition: box-shadow 0.2s, transform 0.15s;
   border-left: 4px solid transparent;
@@ -187,6 +187,7 @@ body {
   border-radius: 50%;
   cursor: pointer;
   flex-shrink: 0;
+  margin-top: 2px;
   position: relative;
   transition: background 0.18s, border-color 0.18s;
   background: #fff5f5;
@@ -214,14 +215,23 @@ body {
   transform: rotate(45deg);
 }
 
+/* ── Task Body ── */
+.task-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* ── Task Text ── */
 .task-text {
-  flex: 1;
   font-size: 0.97rem;
   color: #2d3748;
-  font-weight: 500;
+  font-weight: 600;
   word-break: break-word;
   transition: color 0.18s;
+  line-height: 1.4;
 }
 
 .task-item.completed .task-text {
@@ -229,9 +239,39 @@ body {
   color: #a0aec0;
 }
 
+/* ── Task Description ── */
+.task-description {
+  font-size: 0.875rem;
+  color: #718096;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.task-item.completed .task-description {
+  color: #c4cad4;
+}
+
+/* ── Task Dates ── */
+.task-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.task-dates span {
+  font-size: 0.72rem;
+  color: #a0aec0;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
 /* ── Edit mode ── */
 .task-edit-input {
-  flex: 1;
+  width: 100%;
   padding: 7px 12px;
   border: 2px solid #e53e3e;
   border-radius: 10px;
@@ -242,11 +282,58 @@ body {
   background: #fff5f5;
 }
 
+.task-edit-textarea {
+  width: 100%;
+  padding: 7px 12px;
+  border: 2px solid #fed7d7;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #2d3748;
+  outline: none;
+  background: #fff5f5;
+  resize: vertical;
+  min-height: 56px;
+  transition: border-color 0.18s;
+}
+
+.task-edit-textarea:focus {
+  border-color: #e53e3e;
+}
+
+/* ── Input description (form) ── */
+.input-description {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 2px solid #fed7d7;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #2d3748;
+  background: #fff5f5;
+  outline: none;
+  resize: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-description::placeholder {
+  color: #fc8181;
+}
+
+.input-description:focus {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229,62,62,0.10);
+  background: #fff;
+}
+
 /* ── Task Buttons ── */
 .task-actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
 }
 
 .btn-edit {

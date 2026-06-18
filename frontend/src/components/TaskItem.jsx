@@ -1,19 +1,32 @@
 import React, { useState } from 'react';
 
+function fmt(iso) {
+  return new Date(iso).toLocaleString(undefined, {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
 function TaskItem({ task, onToggle, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(task.title);
+  const [draftTitle, setDraftTitle] = useState(task.title);
+  const [draftDesc, setDraftDesc] = useState(task.description || '');
 
   function handleSave() {
-    const trimmed = draft.trim();
+    const trimmed = draftTitle.trim();
     if (!trimmed) return;
-    onUpdate(task.id, trimmed);
+    onUpdate(task.id, trimmed, draftDesc.trim());
+    setEditing(false);
+  }
+
+  function handleCancel() {
+    setDraftTitle(task.title);
+    setDraftDesc(task.description || '');
     setEditing(false);
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') { setDraft(task.title); setEditing(false); }
+    if (e.key === 'Escape') handleCancel();
   }
 
   return (
@@ -25,23 +38,46 @@ function TaskItem({ task, onToggle, onUpdate, onDelete }) {
         onChange={() => onToggle(task.id)}
       />
 
-      {editing ? (
-        <input
-          className="task-edit-input"
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          autoFocus
-        />
-      ) : (
-        <span className="task-text">{task.title}</span>
-      )}
+      <div className="task-body">
+        {editing ? (
+          <>
+            <input
+              className="task-edit-input"
+              value={draftTitle}
+              onChange={e => setDraftTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Task title"
+              autoFocus
+            />
+            <textarea
+              className="task-edit-textarea"
+              value={draftDesc}
+              onChange={e => setDraftDesc(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Description (optional)..."
+              rows={2}
+            />
+          </>
+        ) : (
+          <>
+            <span className="task-text">{task.title}</span>
+            {task.description && (
+              <p className="task-description">{task.description}</p>
+            )}
+          </>
+        )}
+
+        <div className="task-dates">
+          <span>Created: {fmt(task.createdAt)}</span>
+          {task.updatedAt && <span>Edited: {fmt(task.updatedAt)}</span>}
+        </div>
+      </div>
 
       <div className="task-actions">
         {editing ? (
           <>
             <button className="btn-save" onClick={handleSave}>Save</button>
-            <button className="btn-cancel" onClick={() => { setDraft(task.title); setEditing(false); }}>Cancel</button>
+            <button className="btn-cancel" onClick={handleCancel}>Cancel</button>
           </>
         ) : (
           <>
