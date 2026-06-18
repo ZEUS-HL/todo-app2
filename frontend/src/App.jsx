@@ -8,12 +8,17 @@ import './App.css';
 
 const USERS_KEY   = 'mytasks-v2-users';
 const CURRENT_KEY = 'mytasks-v2-current';
+const TASKS_KEY   = 'mytasks-v2-tasks';
 
 export const AVATAR_COLORS = ['#e53e3e','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899'];
 
 function load(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
   catch { return fallback; }
+}
+
+function saveTasks(tasks) {
+  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
 }
 
 export function getInitials(name) {
@@ -24,39 +29,48 @@ export function getInitials(name) {
 function App() {
   const [users, setUsers]               = useState(() => load(USERS_KEY, []));
   const [currentUserId, setCurrentUser] = useState(() => load(CURRENT_KEY, null));
-  const [tasks, setTasks]               = useState([]);
+  const [tasks, setTasks]               = useState(() => load(TASKS_KEY, []));
   const [filter, setFilter]             = useState('all');
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState(null);
   const [showAccount, setShowAccount]   = useState(false);
 
-  // Persist user state to localStorage
+  // Persist everything to localStorage
   useEffect(() => localStorage.setItem(USERS_KEY,   JSON.stringify(users)),   [users]);
   useEffect(() => localStorage.setItem(CURRENT_KEY, JSON.stringify(currentUserId)), [currentUserId]);
+  useEffect(() => saveTasks(tasks), [tasks]);
 
   // Auto-open modal on first visit
   useEffect(() => { if (users.length === 0) setShowAccount(true); }, []);
 
   const currentUser = users.find(u => u.id === currentUserId) || null;
 
-  // ── Fetch tasks from API ──
-  const fetchTasks = useCallback(async () => {
-    if (!currentUserId) return setTasks([]);
+  // ── Try to sync from API on mount; fall back to localStorage silently ──
+  const syncFromApi = useCallback(async () => {
+    if (!currentUserId) return;
     setLoading(true);
-    setError(null);
     try {
       const data = await taskApi.getAll(currentUserId);
-      setTasks(data);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load tasks. Is the backend running?');
+      if (data.length > 0) setTasks(data);
+    } catch {
+      // Backend unavailable — localStorage data already loaded, carry on
     } finally {
       setLoading(false);
     }
   }, [currentUserId]);
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  useEffect(() => { syncFromApi(); }, [syncFromApi]);
 
-  // ── User operations (localStorage only) ──
+  // ── Helpers ──
+  function applyAndSave(updater) {
+    setTasks(prev => {
+      const next = updater(prev);
+      saveTasks(next);
+      return next;
+    });
+  }
+
+  // ── User operations ──
   function addUser(name, color) {
     const user = { id: Date.now(), name: name.trim(), color };
     setUsers(prev => [...prev, user]);
@@ -71,56 +85,79 @@ function App() {
   function deleteUser(id) {
     const remaining = users.filter(u => u.id !== id);
     setUsers(remaining);
-    setTasks(prev => prev.filter(t => t.userId !== id));
+    applyAndSave(prev => prev.filter(t => t.userId !== id));
     if (currentUserId === id) setCurrentUser(remaining[0]?.id || null);
   }
 
-  // ── Task operations (API) ──
+  // ── Task operations (optimistic local-first, API sync best-effort) ──
   async function addTask(title, description = '') {
     if (!currentUser) return setError('Select or create a user first.');
     if (!title.trim()) return setError('Please enter a task.');
     setError(null);
+
+    const optimistic = {
+      id: Date.now(),
+      userId: currentUserId,
+      title: title.trim(),
+      description: description.trim(),
+      completed: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+    };
+    applyAndSave(prev => [...prev, optimistic]);
+
     try {
-      const task = await taskApi.create({ title, description, userId: currentUserId });
-      setTasks(prev => [...prev, task]);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to add task.');
+      const saved = await taskApi.create({ title, description, userId: currentUserId });
+      // Replace optimistic entry with server-confirmed one
+      applyAndSave(prev => prev.map(t => t.id === optimistic.id ? saved : t));
+    } catch {
+      // Keep optimistic entry — task stays in localStorage
     }
   }
 
   async function toggleTask(id, completed) {
+    // Apply immediately
+    applyAndSave(prev => prev.map(t =>
+      t.id === id ? { ...t, completed: !completed, updatedAt: new Date().toISOString() } : t
+    ));
     try {
       const updated = await taskApi.update(id, { completed: !completed });
-      setTasks(prev => prev.map(t => t.id === id ? updated : t));
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update task.');
+      applyAndSave(prev => prev.map(t => t.id === id ? updated : t));
+    } catch {
+      // Local state already updated — no revert needed
     }
   }
 
   async function updateTask(id, title, description = '') {
+    // Apply immediately
+    applyAndSave(prev => prev.map(t =>
+      t.id === id ? { ...t, title, description, updatedAt: new Date().toISOString() } : t
+    ));
     try {
       const updated = await taskApi.update(id, { title, description });
-      setTasks(prev => prev.map(t => t.id === id ? updated : t));
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update task.');
+      applyAndSave(prev => prev.map(t => t.id === id ? updated : t));
+    } catch {
+      // Local state already updated
     }
   }
 
   async function deleteTask(id) {
+    // Remove immediately
+    applyAndSave(prev => prev.filter(t => t.id !== id));
     try {
       await taskApi.remove(id);
-      setTasks(prev => prev.filter(t => t.id !== id));
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete task.');
+    } catch {
+      // Already removed locally
     }
   }
 
   // ── Filter ──
-  const filtered = tasks.filter(t =>
+  const userTasks = tasks.filter(t => t.userId === currentUserId);
+  const filtered  = userTasks.filter(t =>
     filter === 'active'    ? !t.completed :
     filter === 'completed' ?  t.completed : true
   );
-  const activeCount = tasks.filter(t => !t.completed).length;
+  const activeCount = userTasks.filter(t => !t.completed).length;
 
   return (
     <>
@@ -176,8 +213,8 @@ function App() {
           />
         )}
 
-        {!loading && tasks.length > 0 && (
-          <p className="task-footer">{tasks.length} total task{tasks.length !== 1 ? 's' : ''}</p>
+        {!loading && userTasks.length > 0 && (
+          <p className="task-footer">{userTasks.length} total task{userTasks.length !== 1 ? 's' : ''}</p>
         )}
       </main>
 
