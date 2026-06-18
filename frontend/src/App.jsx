@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
 
-const API_URL = 'http://localhost:3001/api/tasks';
+const API_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/tasks`
+  : 'http://localhost:3001/api/tasks';
 
 function App() {
   const [tasks, setTasks] = useState([]);
