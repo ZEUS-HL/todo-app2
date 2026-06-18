@@ -4,13 +4,12 @@ import TaskList from './components/TaskList';
 import FilterBar from './components/FilterBar';
 import AccountModal from './components/AccountModal';
 import { taskApi } from './services/api';
+import { AVATAR_COLORS, getInitials } from './utils';
 import './App.css';
 
 const USERS_KEY   = 'mytasks-users';
 const CURRENT_KEY = 'mytasks-current';
 const TASKS_KEY   = 'mytasks-tasks';
-
-export const AVATAR_COLORS = ['#e53e3e','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899'];
 
 function load(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
@@ -39,10 +38,6 @@ function migrateTasks() {
 // Run migration once at module load time
 migrateTasks();
 
-export function getInitials(name) {
-  if (!name?.trim()) return '?';
-  return name.trim().split(' ').map(w => w[0].toUpperCase()).slice(0, 2).join('');
-}
 
 function App() {
   const [users, setUsers]               = useState(() => load(USERS_KEY, []));

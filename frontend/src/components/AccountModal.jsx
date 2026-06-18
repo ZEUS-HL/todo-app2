@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { getInitials } from '../App';
+import { getInitials } from '../utils';
 
 function UserForm({ colors, onSave, onCancel, initial }) {
   const [name, setName]   = useState(initial?.name || '');
