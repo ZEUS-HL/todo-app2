@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getInitials } from '../App';
+import { getInitials } from '../utils';
 
 function fmt(iso) {
   return new Date(iso).toLocaleString(undefined, {
