@@ -36,7 +36,7 @@ function TaskItem({ task, users, onToggle, onUpdate, onDelete }) {
         type="checkbox"
         className="task-checkbox"
         checked={task.completed}
-        onChange={() => onToggle(task.id)}
+        onChange={() => onToggle(task.id, task.completed)}
       />
 
       <div className="task-body">
