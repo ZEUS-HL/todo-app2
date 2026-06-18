@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
 import FilterBar from './components/FilterBar';
 import AccountModal from './components/AccountModal';
+import { taskApi } from './services/api';
 import './App.css';
 
-const TASKS_KEY   = 'mytasks-v2-tasks';
 const USERS_KEY   = 'mytasks-v2-users';
 const CURRENT_KEY = 'mytasks-v2-current';
 
@@ -24,22 +24,39 @@ export function getInitials(name) {
 function App() {
   const [users, setUsers]               = useState(() => load(USERS_KEY, []));
   const [currentUserId, setCurrentUser] = useState(() => load(CURRENT_KEY, null));
-  const [tasks, setTasks]               = useState(() => load(TASKS_KEY, []));
+  const [tasks, setTasks]               = useState([]);
   const [filter, setFilter]             = useState('all');
+  const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState(null);
   const [showAccount, setShowAccount]   = useState(false);
 
-  // Persist
-  useEffect(() => localStorage.setItem(TASKS_KEY,   JSON.stringify(tasks)),   [tasks]);
+  // Persist user state to localStorage
   useEffect(() => localStorage.setItem(USERS_KEY,   JSON.stringify(users)),   [users]);
   useEffect(() => localStorage.setItem(CURRENT_KEY, JSON.stringify(currentUserId)), [currentUserId]);
 
-  // Auto-open account modal on first visit
+  // Auto-open modal on first visit
   useEffect(() => { if (users.length === 0) setShowAccount(true); }, []);
 
   const currentUser = users.find(u => u.id === currentUserId) || null;
 
-  // ── User operations ──
+  // ── Fetch tasks from API ──
+  const fetchTasks = useCallback(async () => {
+    if (!currentUserId) return setTasks([]);
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await taskApi.getAll(currentUserId);
+      setTasks(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load tasks. Is the backend running?');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUserId]);
+
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+
+  // ── User operations (localStorage only) ──
   function addUser(name, color) {
     const user = { id: Date.now(), name: name.trim(), color };
     setUsers(prev => [...prev, user]);
@@ -52,53 +69,58 @@ function App() {
   }
 
   function deleteUser(id) {
-    setUsers(prev => prev.filter(u => u.id !== id));
+    const remaining = users.filter(u => u.id !== id);
+    setUsers(remaining);
     setTasks(prev => prev.filter(t => t.userId !== id));
-    if (currentUserId === id) {
-      const remaining = users.filter(u => u.id !== id);
-      setCurrentUser(remaining[0]?.id || null);
+    if (currentUserId === id) setCurrentUser(remaining[0]?.id || null);
+  }
+
+  // ── Task operations (API) ──
+  async function addTask(title, description = '') {
+    if (!currentUser) return setError('Select or create a user first.');
+    if (!title.trim()) return setError('Please enter a task.');
+    setError(null);
+    try {
+      const task = await taskApi.create({ title, description, userId: currentUserId });
+      setTasks(prev => [...prev, task]);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to add task.');
     }
   }
 
-  function switchUser(id) { setCurrentUser(id); }
-
-  // ── Task operations ──
-  function addTask(title, description = '') {
-    if (!currentUser) return setError('Select or create a user first.');
-    if (!title.trim()) return setError('Please enter a task.');
-    setTasks(prev => [...prev, {
-      id: Date.now(),
-      userId: currentUserId,
-      title: title.trim(),
-      description: description.trim(),
-      completed: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: null,
-    }]);
-    setError(null);
+  async function toggleTask(id, completed) {
+    try {
+      const updated = await taskApi.update(id, { completed: !completed });
+      setTasks(prev => prev.map(t => t.id === id ? updated : t));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update task.');
+    }
   }
 
-  function toggleTask(id) {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  async function updateTask(id, title, description = '') {
+    try {
+      const updated = await taskApi.update(id, { title, description });
+      setTasks(prev => prev.map(t => t.id === id ? updated : t));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update task.');
+    }
   }
 
-  function updateTask(id, title, description = '') {
-    setTasks(prev => prev.map(t =>
-      t.id === id ? { ...t, title, description, updatedAt: new Date().toISOString() } : t
-    ));
+  async function deleteTask(id) {
+    try {
+      await taskApi.remove(id);
+      setTasks(prev => prev.filter(t => t.id !== id));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete task.');
+    }
   }
 
-  function deleteTask(id) {
-    setTasks(prev => prev.filter(t => t.id !== id));
-  }
-
-  // ── Filtering ──
-  const userTasks = tasks.filter(t => t.userId === currentUserId);
-  const filtered = userTasks.filter(t =>
-    filter === 'active' ? !t.completed :
-    filter === 'completed' ? t.completed : true
+  // ── Filter ──
+  const filtered = tasks.filter(t =>
+    filter === 'active'    ? !t.completed :
+    filter === 'completed' ?  t.completed : true
   );
-  const activeCount = userTasks.filter(t => !t.completed).length;
+  const activeCount = tasks.filter(t => !t.completed).length;
 
   return (
     <>
@@ -128,18 +150,34 @@ function App() {
             👤 <span>No user selected. <button onClick={() => setShowAccount(true)}>Create or select a user</button> to get started.</span>
           </div>
         )}
-        {error && <div className="error-msg">{error}</div>}
+
+        {error && (
+          <div className="error-msg">
+            {error}
+            <button className="error-dismiss" onClick={() => setError(null)}>✕</button>
+          </div>
+        )}
+
         <TaskForm onAdd={addTask} disabled={!currentUser} />
         <FilterBar filter={filter} onChange={setFilter} />
-        <TaskList
-          tasks={filtered}
-          users={users}
-          onToggle={toggleTask}
-          onUpdate={updateTask}
-          onDelete={deleteTask}
-        />
-        {userTasks.length > 0 && (
-          <p className="task-footer">{userTasks.length} total task{userTasks.length !== 1 ? 's' : ''}</p>
+
+        {loading ? (
+          <div className="loading-state">
+            <div className="spinner" />
+            Loading tasks…
+          </div>
+        ) : (
+          <TaskList
+            tasks={filtered}
+            users={users}
+            onToggle={toggleTask}
+            onUpdate={updateTask}
+            onDelete={deleteTask}
+          />
+        )}
+
+        {!loading && tasks.length > 0 && (
+          <p className="task-footer">{tasks.length} total task{tasks.length !== 1 ? 's' : ''}</p>
         )}
       </main>
 
@@ -151,7 +189,7 @@ function App() {
           onAddUser={addUser}
           onUpdateUser={updateUser}
           onDeleteUser={deleteUser}
-          onSwitchUser={id => { switchUser(id); setShowAccount(false); }}
+          onSwitchUser={id => { setCurrentUser(id); setShowAccount(false); }}
           onClose={() => setShowAccount(false)}
         />
       )}

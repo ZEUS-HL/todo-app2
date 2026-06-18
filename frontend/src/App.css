@@ -479,6 +479,52 @@ body {
   padding: 10px 14px;
   border-radius: 10px;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.error-dismiss {
+  background: none;
+  border: none;
+  color: var(--red-400);
+  cursor: pointer;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  padding: 0 2px;
+  transition: color 0.15s;
+}
+
+.error-dismiss:hover { color: var(--red-700); }
+
+/* ── Loading State ── */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 44px 20px;
+  color: var(--red-400);
+  font-size: 0.97rem;
+  font-weight: 500;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--red-100);
+  border-top-color: var(--red-500);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── No-user banner ── */
