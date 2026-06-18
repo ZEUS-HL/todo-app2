@@ -1,71 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
+import FilterBar from './components/FilterBar';
+import './App.css';
 
-const STORAGE_KEY = 'todo-app-tasks';
+const STORAGE_KEY = 'mytasks-v1';
 
 function loadTasks() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveTasks(tasks) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
 }
 
 function App() {
   const [tasks, setTasks] = useState(() => loadTasks());
+  const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    saveTasks(tasks);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
 
-  function addTask(title, description) {
-    if (!title.trim()) return setError('Title is required');
-    const task = {
+  function addTask(title) {
+    if (!title.trim()) return setError('Please enter a task.');
+    setTasks(prev => [...prev, {
       id: Date.now(),
       title: title.trim(),
-      description: description.trim(),
       completed: false,
       createdAt: new Date().toISOString(),
-    };
-    setTasks((prev) => [...prev, task]);
+    }]);
     setError(null);
   }
 
-  function updateTask(id, updates) {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-    );
-    setError(null);
+  function toggleTask(id) {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  }
+
+  function updateTask(id, title) {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, title } : t));
   }
 
   function deleteTask(id) {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setTasks(prev => prev.filter(t => t.id !== id));
   }
 
-  function toggleTask(id, completed) {
-    updateTask(id, { completed: !completed });
-  }
+  const filtered = tasks.filter(t =>
+    filter === 'active' ? !t.completed :
+    filter === 'completed' ? t.completed : true
+  );
+
+  const activeCount = tasks.filter(t => !t.completed).length;
 
   return (
-    <div className="app">
-      <div className="container">
-        <h1 className="app-title">Todo App</h1>
+    <>
+      <header className="app-header">
+        <h1>My Tasks</h1>
+        <p>{activeCount} task{activeCount !== 1 ? 's' : ''} remaining</p>
+      </header>
+
+      <main className="app-body">
         {error && <div className="error-msg">{error}</div>}
         <TaskForm onAdd={addTask} />
+        <FilterBar filter={filter} onChange={setFilter} />
         <TaskList
-          tasks={tasks}
+          tasks={filtered}
           onToggle={toggleTask}
           onUpdate={updateTask}
           onDelete={deleteTask}
         />
-      </div>
-    </div>
+        {tasks.length > 0 && (
+          <p className="task-footer">{tasks.length} total task{tasks.length !== 1 ? 's' : ''}</p>
+        )}
+      </main>
+    </>
   );
 }
 
