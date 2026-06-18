@@ -386,8 +386,8 @@ body {
 }
 
 .btn-delete {
-  background: transparent;
-  color: #fc8181;
+  background: #3b82f6;
+  color: #fff;
   border: none;
   width: 28px;
   height: 28px;
@@ -397,13 +397,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s, color 0.18s;
+  transition: background 0.18s;
   line-height: 1;
 }
 
 .btn-delete:hover {
-  background: #fff5f5;
-  color: #e53e3e;
+  background: #2563eb;
+  color: #fff;
 }
 
 /* ── Footer count ── */
