@@ -53,10 +53,10 @@ function App() {
   useEffect(() => localStorage.setItem(CURRENT_KEY, JSON.stringify(currentUserId)), [currentUserId]);
   useEffect(() => saveTasks(tasks), [tasks]);
 
+  const currentUser = users.find(u => u.id === currentUserId) || null;
+
   // Open account modal when there is no active user
   useEffect(() => { if (!currentUser) setShowAccount(true); }, [currentUser]);
-
-  const currentUser = users.find(u => u.id === currentUserId) || null;
 
   // ── Try to sync from API on mount; fall back to localStorage silently ──
   const syncFromApi = useCallback(async () => {
