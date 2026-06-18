@@ -1,21 +1,21 @@
-/* ── CSS Variables: Graded Red Palette ── */
+/* ── CSS Variables: Light Blue Palette ── */
 :root {
-  --red-50:  #fff1f1;
-  --red-100: #ffe0e0;
-  --red-200: #ffc2c2;
-  --red-300: #ff9494;
-  --red-400: #fc5c5c;
-  --red-500: #f42b2b;
-  --red-600: #e01010;
-  --red-700: #bc0c0c;
-  --red-800: #9b0f0f;
-  --red-900: #7f1111;
+  --red-50:  #eff8ff;
+  --red-100: #dbeffe;
+  --red-200: #bae3fd;
+  --red-300: #7dcefb;
+  --red-400: #3ab5f7;
+  --red-500: #0e9de8;
+  --red-600: #027dc6;
+  --red-700: #0363a0;
+  --red-800: #074f82;
+  --red-900: #0c426c;
 
-  --grad-main:   linear-gradient(135deg, #f42b2b 0%, #bc0c0c 60%, #7f1111 100%);
-  --grad-soft:   linear-gradient(135deg, #fc5c5c 0%, #e01010 100%);
-  --grad-muted:  linear-gradient(135deg, #ff9494 0%, #fc5c5c 100%);
-  --shadow-red:  0 4px 18px rgba(188, 12, 12, 0.32);
-  --shadow-soft: 0 2px 14px rgba(244, 43, 43, 0.12);
+  --grad-main:   linear-gradient(135deg, #0e9de8 0%, #027dc6 60%, #0363a0 100%);
+  --grad-soft:   linear-gradient(135deg, #3ab5f7 0%, #027dc6 100%);
+  --grad-muted:  linear-gradient(135deg, #7dcefb 0%, #3ab5f7 100%);
+  --shadow-red:  0 4px 18px rgba(2, 125, 198, 0.28);
+  --shadow-soft: 0 2px 14px rgba(14, 157, 232, 0.12);
 }
 
 * {
@@ -26,7 +26,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(160deg, #fff1f1 0%, #ffe0e0 50%, #fff1f1 100%);
+  background: linear-gradient(160deg, #eff8ff 0%, #dbeffe 50%, #eff8ff 100%);
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -35,7 +35,7 @@ body {
 .app-header {
   background: var(--grad-main);
   padding: 24px 24px 22px;
-  box-shadow: var(--shadow-red);
+  box-shadow: 0 4px 18px rgba(2, 125, 198, 0.35);
 }
 
 .header-inner {
@@ -577,7 +577,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(90, 0, 0, 0.38);
+  background: rgba(3, 63, 100, 0.38);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -597,7 +597,7 @@ body {
   padding: 28px 24px 24px;
   width: 100%;
   max-width: 380px;
-  box-shadow: 0 24px 64px rgba(120, 0, 0, 0.22);
+  box-shadow: 0 24px 64px rgba(2, 99, 160, 0.22);
   animation: slideUp 0.18s ease;
   display: flex;
   flex-direction: column;
