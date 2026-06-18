@@ -2,74 +2,54 @@ import React, { useState, useEffect } from 'react';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
 
-const API_URL = import.meta.env.DEV
-  ? 'http://localhost:3001/api/tasks'
-  : '/api/tasks';
+const STORAGE_KEY = 'todo-app-tasks';
+
+function loadTasks() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTasks(tasks) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
 
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState(() => loadTasks());
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    saveTasks(tasks);
+  }, [tasks]);
 
-  async function fetchTasks() {
-    try {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Failed to fetch tasks');
-      const data = await res.json();
-      setTasks(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  function addTask(title, description) {
+    if (!title.trim()) return setError('Title is required');
+    const task = {
+      id: Date.now(),
+      title: title.trim(),
+      description: description.trim(),
+      completed: false,
+      createdAt: new Date().toISOString(),
+    };
+    setTasks((prev) => [...prev, task]);
+    setError(null);
   }
 
-  async function addTask(title, description) {
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description }),
-      });
-      if (!res.ok) throw new Error('Failed to add task');
-      const task = await res.json();
-      setTasks((prev) => [...prev, task]);
-    } catch (err) {
-      setError(err.message);
-    }
+  function updateTask(id, updates) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+    );
+    setError(null);
   }
 
-  async function updateTask(id, updates) {
-    try {
-      const res = await fetch(`${API_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error('Failed to update task');
-      const updated = await res.json();
-      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    } catch (err) {
-      setError(err.message);
-    }
+  function deleteTask(id) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
-  async function deleteTask(id) {
-    try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete task');
-      setTasks((prev) => prev.filter((t) => t.id !== id));
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function toggleTask(id, completed) {
-    await updateTask(id, { completed: !completed });
+  function toggleTask(id, completed) {
+    updateTask(id, { completed: !completed });
   }
 
   return (
@@ -78,16 +58,12 @@ function App() {
         <h1 className="app-title">Todo App</h1>
         {error && <div className="error-msg">{error}</div>}
         <TaskForm onAdd={addTask} />
-        {loading ? (
-          <p className="loading">Loading tasks...</p>
-        ) : (
-          <TaskList
-            tasks={tasks}
-            onToggle={toggleTask}
-            onUpdate={updateTask}
-            onDelete={deleteTask}
-          />
-        )}
+        <TaskList
+          tasks={tasks}
+          onToggle={toggleTask}
+          onUpdate={updateTask}
+          onDelete={deleteTask}
+        />
       </div>
     </div>
   );
