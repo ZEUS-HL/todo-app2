@@ -22,6 +22,7 @@ export default function handler(req, res) {
       ...(title !== undefined && { title }),
       ...(description !== undefined && { description }),
       ...(completed !== undefined && { completed }),
+      updatedAt: new Date().toISOString(),
     };
     return res.status(200).json(global._tasks[index]);
   }

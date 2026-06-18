@@ -16,14 +16,16 @@ export default function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { title, description } = req.body;
+    const { title, description, userId } = req.body;
     if (!title) return res.status(400).json({ error: 'Title is required' });
     const task = {
       id: global._nextId++,
+      userId: userId ?? null,
       title,
       description: description || '',
       completed: false,
       createdAt: new Date().toISOString(),
+      updatedAt: null,
     };
     global._tasks.push(task);
     return res.status(201).json(task);
