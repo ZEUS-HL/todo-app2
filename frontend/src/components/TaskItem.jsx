@@ -2,23 +2,19 @@ import React, { useState } from 'react';
 
 function TaskItem({ task, onToggle, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(task.title);
-  const [editDescription, setEditDescription] = useState(task.description);
+  const [draft, setDraft] = useState(task.title);
 
   function handleSave() {
-    const trimmed = editTitle.trim();
+    const trimmed = draft.trim();
     if (!trimmed) return;
-    onUpdate(task.id, { title: trimmed, description: editDescription.trim() });
+    onUpdate(task.id, trimmed);
     setEditing(false);
   }
 
-  function handleCancel() {
-    setEditTitle(task.title);
-    setEditDescription(task.description);
-    setEditing(false);
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') { setDraft(task.title); setEditing(false); }
   }
-
-  const createdDate = new Date(task.createdAt).toLocaleDateString();
 
   return (
     <div className={`task-item${task.completed ? ' completed' : ''}`}>
@@ -26,49 +22,34 @@ function TaskItem({ task, onToggle, onUpdate, onDelete }) {
         type="checkbox"
         className="task-checkbox"
         checked={task.completed}
-        onChange={() => onToggle(task.id, task.completed)}
+        onChange={() => onToggle(task.id)}
       />
+
       {editing ? (
-        <div className="task-edit-form">
-          <input
-            type="text"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            placeholder="Task title"
-          />
-          <textarea
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            placeholder="Description (optional)"
-          />
-          <div className="edit-actions">
-            <button className="btn-save" onClick={handleSave}>
-              Save
-            </button>
-            <button className="btn-cancel" onClick={handleCancel}>
-              Cancel
-            </button>
-          </div>
-        </div>
+        <input
+          className="task-edit-input"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
       ) : (
-        <div className="task-content">
-          <div className="task-title">{task.title}</div>
-          {task.description && (
-            <div className="task-description">{task.description}</div>
-          )}
-          <div className="task-meta">Created: {createdDate}</div>
-        </div>
+        <span className="task-text">{task.title}</span>
       )}
-      {!editing && (
-        <div className="task-actions">
-          <button className="btn-edit" onClick={() => setEditing(true)}>
-            Edit
-          </button>
-          <button className="btn-delete" onClick={() => onDelete(task.id)}>
-            Delete
-          </button>
-        </div>
-      )}
+
+      <div className="task-actions">
+        {editing ? (
+          <>
+            <button className="btn-save" onClick={handleSave}>Save</button>
+            <button className="btn-cancel" onClick={() => { setDraft(task.title); setEditing(false); }}>Cancel</button>
+          </>
+        ) : (
+          <>
+            <button className="btn-edit" onClick={() => setEditing(true)}>Edit</button>
+            <button className="btn-delete" onClick={() => onDelete(task.id)} title="Delete">✕</button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
