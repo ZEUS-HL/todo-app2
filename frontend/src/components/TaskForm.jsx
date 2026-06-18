@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 
-function TaskForm({ onAdd }) {
-  const [title, setTitle] = useState('');
+function TaskForm({ onAdd, disabled }) {
+  const [title, setTitle]           = useState('');
   const [description, setDescription] = useState('');
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded]     = useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
+    if (disabled) return;
     onAdd(title, description);
     setTitle('');
     setDescription('');
@@ -14,19 +15,20 @@ function TaskForm({ onAdd }) {
   }
 
   return (
-    <div className="input-card">
+    <div className={`input-card${disabled ? ' input-card-disabled' : ''}`}>
       <form onSubmit={handleSubmit}>
         <div className="input-row">
           <input
             type="text"
-            placeholder="Add a new task..."
+            placeholder={disabled ? 'Select a user first...' : 'Add a new task...'}
             value={title}
             onChange={e => setTitle(e.target.value)}
-            onFocus={() => setExpanded(true)}
+            onFocus={() => !disabled && setExpanded(true)}
+            disabled={disabled}
           />
-          <button type="submit" className="btn-add">Add</button>
+          <button type="submit" className="btn-add" disabled={disabled}>Add</button>
         </div>
-        {expanded && (
+        {expanded && !disabled && (
           <textarea
             className="input-description"
             placeholder="Add a description (optional)..."

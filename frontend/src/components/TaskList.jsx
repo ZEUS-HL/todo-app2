@@ -1,7 +1,7 @@
 import React from 'react';
 import TaskItem from './TaskItem';
 
-function TaskList({ tasks, onToggle, onUpdate, onDelete }) {
+function TaskList({ tasks, users, onToggle, onUpdate, onDelete }) {
   if (tasks.length === 0) {
     return <div className="task-list-empty">No tasks here. Add one above!</div>;
   }
@@ -12,6 +12,7 @@ function TaskList({ tasks, onToggle, onUpdate, onDelete }) {
         <TaskItem
           key={task.id}
           task={task}
+          users={users}
           onToggle={onToggle}
           onUpdate={onUpdate}
           onDelete={onDelete}
