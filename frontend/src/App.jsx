@@ -134,8 +134,7 @@ function App() {
       t.id === id ? { ...t, completed: !completed, updatedAt: new Date().toISOString() } : t
     ));
     try {
-      const updated = await taskApi.update(id, { completed: !completed });
-      applyAndSave(prev => prev.map(t => t.id === id ? updated : t));
+      await taskApi.update(id, { completed: !completed });
     } catch {
       // Local state already updated — no revert needed
     }
@@ -147,8 +146,7 @@ function App() {
       t.id === id ? { ...t, title, description, updatedAt: new Date().toISOString() } : t
     ));
     try {
-      const updated = await taskApi.update(id, { title, description });
-      applyAndSave(prev => prev.map(t => t.id === id ? updated : t));
+      await taskApi.update(id, { title, description });
     } catch {
       // Local state already updated
     }
