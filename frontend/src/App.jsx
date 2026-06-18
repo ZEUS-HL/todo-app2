@@ -20,13 +20,15 @@ function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
 
-  function addTask(title) {
+  function addTask(title, description = '') {
     if (!title.trim()) return setError('Please enter a task.');
     setTasks(prev => [...prev, {
       id: Date.now(),
       title: title.trim(),
+      description: description.trim(),
       completed: false,
       createdAt: new Date().toISOString(),
+      updatedAt: null,
     }]);
     setError(null);
   }
@@ -35,8 +37,12 @@ function App() {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   }
 
-  function updateTask(id, title) {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, title } : t));
+  function updateTask(id, title, description = '') {
+    setTasks(prev => prev.map(t =>
+      t.id === id
+        ? { ...t, title, description, updatedAt: new Date().toISOString() }
+        : t
+    ));
   }
 
   function deleteTask(id) {
