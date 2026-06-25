@@ -50,11 +50,14 @@ body {
 .header-titles { text-align: left; }
 
 .app-header h1 {
-  color: #fff;
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: 0.5px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  background: linear-gradient(90deg, #ff0000 0%, #cc0000 40%, #800000 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
 }
 
 .app-header p {
