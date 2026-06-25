@@ -175,7 +175,7 @@ function App() {
       <header className="app-header">
         <div className="header-inner">
           <div className="header-titles">
-            <h1>My Tasks</h1>
+            <h1>-= My Tasks =-</h1>
             <p>
               {currentUser ? `${currentUser.name} · ` : ''}
               {activeCount} task{activeCount !== 1 ? 's' : ''} remaining
